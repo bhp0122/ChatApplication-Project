@@ -15,10 +15,14 @@ print("Client socket created")
 client_socket.connect((IP, PORT))
 print(f"Client {client_socket} now connected to server") # prints the socket information, may remove
 
+# Bhumi: After the client_socket.connect, I'll need the client to input their name so I can pair the name with the random number
+
+
+
 # create and send message
 message = input("Start chatting: ")
 while message != ".exit":
-    client_socket.sendall(message.encode('utf-8'))
+    client_socket.sendall(message.encode('utf-8')) # Bhumi: Is sendall used for a TCP connection because I thought I was used for UDP connection. 
 
     # receive any messages and display them
     message_rcd = client_socket.recv(BUFF_SIZE).decode('utf-8')
