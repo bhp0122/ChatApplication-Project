@@ -68,7 +68,7 @@ def broadcast(message):
         c.send(message.encode('ascii'))
 
 def send(message, receiver):
-    client_index = usernames.index(receiver)
+    client_index = usernames.index(receiver) # Precious: receiver name should be decoded to string before being used, (receiver.decode('ascii'))
     receiver_connection = connected_clients[client_index]
     receiver_connection.send(message)
 
@@ -79,7 +79,7 @@ def forwarding(client_connection):
         client_connection.send('Receiver:'.encode('ascii'))
         receiver = client_connection.recv(1024)
         
-        client_connection.send('To {}: {}'.format(receiver, input(' ')).encode('ascii'))
+        client_connection.send('To {}: {}'.format(receiver, input(' ')).encode('ascii')) # Precious: I don't think the server should receive input
         message = client_connection.recv(1024)
         # Receives message of up to 1024 bytes
 
