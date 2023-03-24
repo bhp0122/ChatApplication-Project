@@ -31,7 +31,7 @@ def handle():
         # Connects to the client side where it is defined as .connect()
         # Will remain available to listen for more connections
 
-        client_connection.send('NAME: '.encode('ascii'))
+        client_connection.send('Name'.encode('ascii'))
         # .send() is only used with a connected socket ∴ uses the client socket to send
         # Asks name from the client to turn into nickname.
 
@@ -58,29 +58,34 @@ def handle():
         connected_clients.append(client_connection)
         # adds the client's connection to the list
 
-        print(connected_clients)
-
+        list_of_clients = {str(i) for i in usernames}
+        broadcast('\nConnected Clients: {}'.format(list_of_clients))
+    
         forwarding_thread = threading.Thread(target = forwarding, args = (client_connection, ))
         forwarding_thread.start()
     
 def broadcast(message):
+    # sends the message to everyone
     for c in connected_clients:
         c.send(message.encode('ascii'))
 
+
 def send(message, receiver):
-    client_index = usernames.index(receiver) # Precious: receiver name should be decoded to string before being used, (receiver.decode('ascii'))
+    # sends the message to the desired person
+    client_index = usernames.index(receiver)
     receiver_connection = connected_clients[client_index]
-    receiver_connection.send(message)
+    receiver_connection.send(message.encode('ascii'))
 
 
 def forwarding(client_connection):
     # Receives the message by the user and sends it to other users
-    while True:   
-        client_connection.send('Receiver:'.encode('ascii'))
-        receiver = client_connection.recv(1024)
-        
-        client_connection.send('To {}: {}'.format(receiver, input(' ')).encode('ascii')) # Precious: I don't think the server should receive input
-        message = client_connection.recv(1024)
+    while True:
+        client_connection.send('Receiver'.encode('ascii'))
+        receiver = client_connection.recv(1024).decode('ascii')
+        # needs to know who to direct the message to
+
+        client_connection.send('Message'.encode('ascii'))
+        message = client_connection.recv(1024).decode('ascii')
         # Receives message of up to 1024 bytes
 
         send(message, receiver)
