@@ -45,6 +45,9 @@ if __name__ == "__main__":
     receiving_thread.start()
 
     message = ''
+    
+    print('Enter "change" at any to change the receiver') # client can enter 'change' to enter a new username of the receiver
+    
     # continue to take input until user enters ".exit"
     while True:
 
