@@ -1,68 +1,60 @@
 import socket
+import threading
+
 
 BUFF_SIZE = 1024
 PORT = 9999
-IP = '127.0.0.1'
+IP = '127.0.0.1'  # localhost
+
 
 # receive any messages and display them
 def receive_display_message():
-    message_rcd = client_socket.recv(BUFF_SIZE).decode('utf-8')
-    if not message_rcd:
-        return 0
-    else:
-        print(message_rcd)
-        return 1
+    while True: # loop to keep checking for
+        message_rcd = client_socket.recv(BUFF_SIZE).decode('utf-8')
+        if message_rcd:
+            if message_rcd not in ['Receiver', 'Message']: # messages is this list should not be printed
+                print(f'message alert: {message_rcd}\n')  # prints message from server
+            else:
+                handle_message(message_rcd)
+
+# displays instructions for the user on what to enter 
+def handle_message(m):
+    if m == 'Receiver':
+        print("Who would you like to send a message to? ") 
+    elif m == 'Message':
+        print("Enter message ")
 
 
 if __name__ == "__main__":
+
     # create the client socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print("Client socket created")
 
     client_socket.connect((IP, PORT))
-    print(f"Client {client_socket} now connected to server") # prints the socket information, may remove
-    # Bhumi: I don't think the client will need this. 
-   
+    print(f"Client now connected to server")  # prints the socket information, may remove
 
-    # create and send message
+
+    # get name from user and send it to the server
+    if client_socket.recv(1024).decode('utf-8') == 'Name':
+        name = input('Please enter your name --> ')
+        client_socket.send(name.encode('utf-8'))
+
+    ''' this thread simultaneously runs the receive_display_message function to display a certain message based on the message received from the server'''
+    receiving_thread = threading.Thread(target=receive_display_message)
+    receiving_thread.start()
+
     message = ''
-    # get username from user
-
-    print("Enter your username: \n")
     # continue to take input until user enters ".exit"
-    
-    '''
-    Bhumi: Since the server needs the user's username, it will have to receive it from the person so it can let everyone else know so anyone can send a message 
-    
-    Ex. if client_socket.recv(1024).decode('ascii') == 'Name':
-            name = input('Please enter your name --> ')
-            client_socket.send(name.encode('ascii'))
-    '''
-    
-    
-    while message != ".exit":
-        '''
-        Bhumi: Before the client is able to read input, the server needs to let the user know its connected
-        and what clients are already connected. The server also needs to know who the message is going to be for.
-        
-        Ex. messsage_rcv = client_socket.recv(1024).decode('ascii')
-        
-            if message_received == 'Receiver':
-                receiver = input('Who would you like to send this message to? ')
-                client_socket.send(receiver.encode('ascii'))
-            if message_received == 'Message':
-                message = input(f'To {receiver}: ')
-                client_socket.send(message.encode('ascii'))
-            elif message_received != 'Receiver' and message_received != 'Message':
-                print(message_received)
-        
-        This is what I used. The above worked to some extent, but it was still buggy.   
-        '''
-        
-        message = input("--> ") # first time gets username
+    while True:
+
+        print("If you do not see the 'Enter message' instruction, enter a character.") # bug in the code, can enter character or string
+        message = input('--> \n')
+        # print("after getting input")
         client_socket.send(message.encode('utf-8'))
-        if receive_display_message() == 0:
-            message = input("--> ") # takes input for next message
 
-    client_socket.close() # close the chat if client enters ".exit"
-
+        # in server code, can delete
+        # if message == '.exit':
+        #     client_socket.close()  # close the chat if client enters ".exit"
+        #     break
+    
