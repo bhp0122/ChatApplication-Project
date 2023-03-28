@@ -9,7 +9,7 @@ IP = '127.0.0.1'  # localhost
 
 # receive any messages and display them
 def receive_display_message():
-    while True: # loop to keep checking for
+    while True: # loop to keep checking for message from server
         message_rcd = client_socket.recv(BUFF_SIZE).decode('utf-8')
         if message_rcd:
             if message_rcd not in ['Receiver', 'Message']: # messages is this list should not be printed
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     print("Client socket created")
 
     client_socket.connect((IP, PORT))
-    print(f"Client now connected to server")  # prints the socket information, may remove
+    print(f"Client now connected to server") 
 
 
     # get name from user and send it to the server
@@ -53,11 +53,6 @@ if __name__ == "__main__":
 
         print("If you do not see the 'Enter message' instruction, enter a character.") # bug in the code, can enter character or string
         message = input('--> \n')
-        # print("after getting input")
         client_socket.send(message.encode('utf-8'))
 
-        # in server code, can delete
-        # if message == '.exit':
-        #     client_socket.close()  # close the chat if client enters ".exit"
-        #     break
     
