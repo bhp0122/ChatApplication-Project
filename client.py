@@ -1,58 +1,47 @@
 import socket
 import threading
 
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(('127.0.0.1', 9999))
 
-BUFF_SIZE = 1024
-PORT = 9999
-IP = '127.0.0.1'  # localhost
+if client_socket.recv(1024).decode('ascii') == 'NAME':
+    name = input('Name --> ')
+    client_socket.send(name.encode('ascii'))
+    print('Enter ".exit" to exit.')
+    print('Enter "change" to switch who you would like to send a message to.')
 
-
-# receive any messages and display them
-def receive_display_message():
-    while True: # loop to keep checking for message from server
-        message_rcd = client_socket.recv(BUFF_SIZE).decode('utf-8')
-        if message_rcd:
-            if message_rcd not in ['Receiver', 'Message']: # messages is this list should not be printed
-                print(f'message alert: {message_rcd}\n')  # prints message from server
-            else:
-                handle_message(message_rcd)
-
-# displays instructions for the user on what to enter 
-def handle_message(m):
-    if m == 'Receiver':
-        print("Who would you like to send a message to? ") 
-    elif m == 'Message':
-        print("Enter message ")
-
-
-if __name__ == "__main__":
-
-    # create the client socket
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("Client socket created")
-
-    client_socket.connect((IP, PORT))
-    print(f"Client now connected to server") 
-
-
-    # get name from user and send it to the server
-    if client_socket.recv(1024).decode('utf-8') == 'Name':
-        name = input('Please enter your name --> ')
-        client_socket.send(name.encode('utf-8'))
-
-    ''' this thread simultaneously runs the receive_display_message function to display a certain message based on the message received from the server'''
-    receiving_thread = threading.Thread(target=receive_display_message)
-    receiving_thread.start()
-
-    message = ''
-    
-    print('Enter "change" at any to change the receiver') # client can enter 'change' to enter a new username of the receiver
-    
-    # continue to take input until user enters ".exit"
+def receive_display_messages():
     while True:
+        received_message = client_socket.recv(1024).decode('ascii')
+        if received_message not in ['RCVR', 'RCVR DNE', 'MSG']:
+            print(f"{received_message}")
+        else:
+            output = handle(received_message)
+            if output == 0:
+                return
 
-        print("If you do not see the 'Enter message' instruction, enter a character.") # bug in the code, can enter character or string
-        message = input('--> \n')
-        client_socket.send(message.encode('utf-8'))
 
-    
+def handle(received_message):
+    rcvr = ''
+    if received_message == 'RCVR':
+        rcvr = input('Who would you like to send a message to? ')
+        
+        if rcvr == '.exit':
+            client_socket.send(rcvr.encode('ascii'))
+            return 0
+        else:
+            client_socket.send(rcvr.encode('ascii'))
+
+    if received_message == 'MSG':
+        msg = input('\nMessage: ')
+
+        if msg == '.exit':
+            client_socket.send(rcvr.encode('ascii'))
+            return 0
+        else:
+            client_socket.send(msg.encode('ascii'))
+
+
+
+receiving_thread = threading.Thread(target=receive_display_messages)
+receiving_thread.start()
