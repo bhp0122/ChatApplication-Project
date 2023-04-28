@@ -29,25 +29,34 @@ def handle_message():
 if __name__ == "__main__":
     # create the client socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("Client socket created")
 
     # connect client to server
-    client_socket.connect((IP, PORT))
-    print(f"Client now connected to server")
+    try:
+        client_socket.connect((IP, PORT))
+        print("Client socket created")
+        print(f"Client now connected to server")
 
+        # get username from user
+        msg = client_socket.recv(1024).decode('ascii')
 
-    # get username from user
-    msg = client_socket.recv(1024).decode('ascii')
-    if msg == 'NAME':
-        name = input('Please enter your name: ')
-        client_socket.send(name.encode('utf-8'))
+        if msg == 'NAME':
+            name = input('Please enter your name: ')
+            while True:
+                if name.isalpha() == False:
+                    name = input('Invalid name. Please enter a valid name: ')
+                else:
+                    client_socket.send(name.encode('utf-8'))
+                    break
 
-    print('You can not begin to enter messages.')
+        print('You can begin to enter messages.')
 
-    # thread to check for message from server
-    receive_thread = threading.Thread(target=receive_display_message)
-    receive_thread.start()
+        # thread to check for message from server
+        receive_thread = threading.Thread(target=receive_display_message)
+        receive_thread.start()
 
-    # to continue to take input from the user
-    handle_thread = threading.Thread(target=handle_message)
-    handle_thread.start()
+        # to continue to take input from the user
+        handle_thread = threading.Thread(target=handle_message)
+        handle_thread.start()
+    
+    except:
+        print("Could not properly connect to server. Server may be unavailable.")
