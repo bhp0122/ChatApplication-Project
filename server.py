@@ -1,6 +1,12 @@
 import socket
 import threading
 import random
+import ssl
+
+# create the context and load the server's certificate and private key
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.minimum_version = ssl.TLSVersion.TLSv1_3  # uses the newest TSL version for better security
+context.load_cert_chain(certfile='server-cert.pem', keyfile='server-key.pem')
 
 print('Server is starting...', end=' ')
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -16,16 +22,20 @@ print('Server is listening...')
 
 connected_clients = {}
 
+# wrap the server socket for SSL encryption
+wrapped_server = context.wrap_socket(server, server_side=True)
+
 
 def broadcast(message):
     # Sends the message to everyone
     for c in connected_clients.keys():
         c.send(message.encode('ascii'))
 
+
 def receive():
     # Accepts incoming requests
     while True:
-        client_socket, address = server.accept()
+        client_socket, address = wrapped_server.accept()
         # Connects to the client side where it is defined as .connect() inside the client file
 
         client_socket.send('NAME'.encode('ascii'))
@@ -53,10 +63,11 @@ def receive():
 
 
 def send(msg, other_client, client_socket):
-    # Sends message to desired person. 
+    # Sends message to desired person.
     rcvr_socket = list(filter(lambda x: connected_clients[x] == other_client, connected_clients))[0]
-    rcvr_socket.send("From {}: {}".format(connected_clients[client_socket], msg).encode('ascii'))
+    rcvr_socket.send("Private message from {}: {}".format(connected_clients[client_socket], msg).encode('ascii'))
     return
+
 
 def handle(client_socket):
     # Receives the message by the user and sends it to other users
@@ -66,7 +77,8 @@ def handle(client_socket):
         rcvr = None
         for other_client in connected_clients.values():
             if '@' + other_client in msg:
-                send(msg, other_client, client_socket)
+                msg_start = len(other_client) + 2
+                send(msg[msg_start:], other_client, client_socket)
                 rcvr = other_client
                 break
         if msg == '.exit':
@@ -75,8 +87,9 @@ def handle(client_socket):
         elif rcvr == None:
             broadcast('From {}: {}'.format(connected_clients[client_socket], msg))
 
+
 def exit(client_socket):
-    # Notfies everyone that a client has left, and closes the client's socket. 
+    # Notfies everyone that a client has left, and closes the client's socket.
     broadcast('{} has left'.format(connected_clients[client_socket]))
     print(f"{connected_clients[client_socket]} has left.")
 
@@ -85,5 +98,6 @@ def exit(client_socket):
 
     del connected_clients[client_socket]
     return
-    
+
+
 receive()
